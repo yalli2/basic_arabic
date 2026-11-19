@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Final test · Basic Arabic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;900&family=Reem+Kufi:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="data/meta.js"></script>
+<script src="data/ch00.js"></script>
+<script src="data/ch01.js"></script>
+<script src="data/ch02.js"></script>
+<script src="data/ch03.js"></script>
+<script src="data/ch04.js"></script>
+<script src="data/ch05.js"></script>
+<script src="data/ch06.js"></script>
+<script src="data/ch07.js"></script>
+<script src="data/ch08.js"></script>
+<script src="data/ch09.js"></script>
+<script src="data/ch10.js"></script>
+<script src="data/ch11.js"></script>
+<script src="data/ch12.js"></script>
+<script src="data/ch13.js"></script>
+<script src="data/ch14.js"></script>
+<script src="assets/app.js"></script>
+<script>
+(function () {
+  const { S, t, u, esc, LS } = BA;
+  const L = (ko, en) => (S.lang === "ko" ? ko : en);
+  let seed = LS.get("final_seed", null);
+  if (seed == null) { seed = Date.now() % 1e9; LS.set("final_seed", seed); }
+  const pool = [];
+  Object.keys(BA_CH).forEach(n => { if (+n === 0) return; const ch = BA_CH[n];
+    ch.sets.forEach(s => s.qs.forEach(q => { if (q.t === "mcq") pool.push(Object.assign({}, q, { id: `c${n}_${s.id}_${q.id}`, v: q.v || ch.voice, chn: +n })); })); });
+  // pick 20 spread over chapters
+  const r = BA.seeded(seed), byCh = {};
+  pool.forEach(q => (byCh[q.chn] = byCh[q.chn] || []).push(q));
+  const chs = Object.keys(byCh).map(Number).sort((a, b) => a - b);
+  const qs = []; let guard = 0;
+  while (qs.length < 20 && guard++ < 500) { const c = chs[qs.length % chs.length]; const arr = byCh[c].filter(q => !qs.includes(q)); if (arr.length) qs.push(arr[Math.floor(r() * arr.length)]); }
+  qs.forEach(q => { q.q = { ko: `<span class="qch">${q.chn}과</span> ` + q.q.ko, en: `<span class="qch">Ch.${q.chn}</span> ` + q.q.en }; });
+  const set = { id: "final", title: { ko: "종합 테스트 · 20문항", en: "Final test · 20 questions" },
+    desc: { ko: "1~14과에서 골고루 뽑은 문제입니다. 다 풀고 채점하세요!", en: "Questions drawn from every chapter (1–14). Answer them all, then check!" }, qs };
+  const root = document.getElementById("app");
+  function render() {
+    BA.applyBig(); BA.stopAll();
+    root.innerHTML = BA.topbar(-2) + `<main class="chap"><section class="chero s7"><div class="chin"><div class="cnum">FINAL<span>${L("마무리", "Wrap-up")}</span></div>
+      <h1>${L("종합 테스트", "Final test")}</h1><p class="csub">${L("80% 이상이면 이 교재의 기초를 잘 익힌 거예요. 새 문제로 다시 도전할 수도 있어요.", "Score 80%+ and you've mastered the basics. You can also try a new set of questions.")}</p>
+      <div class="hcta"><button class="ghostl" id="newtest">🔀 ${L("새 문제 세트", "New question set")}</button></div></div><div class="cicon" dir="rtl">✓</div></section>
+      <div class="cbody single"><div class="cmain">${BA.renderSet(set, "final", "m")}</div></div></main>` + BA.footer();
+    BA.bindTop(render);
+    BA.bindSet(root, set, "final", "m", null);
+    document.getElementById("newtest").onclick = () => { LS.set("final_seed", Date.now() % 1e9); location.reload(); };
+  }
+  render();
+})();
+</script>
+</body>
+</html>

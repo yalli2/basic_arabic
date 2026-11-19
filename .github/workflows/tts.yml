@@ -1,0 +1,32 @@
+name: Generate native Arabic audio
+on:
+  push:
+    branches: [main]
+    paths: ["audio/manifest.json", "tools/gen_audio.py", ".github/workflows/tts.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: tts
+  cancel-in-progress: false
+jobs:
+  tts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install edge-tts
+      - run: python tools/gen_audio.py
+      - name: Commit audio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add audio
+          if git diff --cached --quiet; then echo "no changes"; else
+            git commit -m "Generate native Arabic audio clips"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
